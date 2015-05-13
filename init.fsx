@@ -1,4 +1,4 @@
-#r @"packages/FAKE/tools/FakeLib.dll"
+#r @"../packages/FAKE/tools/FakeLib.dll"
 open Fake
 open System
 open System.IO
@@ -10,7 +10,7 @@ open System.Collections.Generic
 // It generates the build.fsx and generate.fsx files 
 // --------------------------------
 
-let dirsWithProjects = ["src";"tests";"docs/content"] 
+let dirsWithProjects = ["src";"progress"] 
                        |> List.map (fun d -> directoryInfo (__SOURCE_DIRECTORY__ @@ d))
 
 // special funtions
@@ -63,13 +63,13 @@ let print msg =
   """ border msg border
 
 print """
-# Project Scaffold Init Script
+# Project Euler Init Script
 # Please answer a few questions and we will generate
 # two files:
 #
 # build.fsx               This will be your build script
-# docs/tools/generate.fsx This script will generate your 
-#                         documentation
+# progress/tools/generate.fsx This script will generate your 
+#                         progress tracking site
 #
 # NOTE: Aside from the Project Name, you may leave any 
 # of these blank, but you will need to change the defaults 
@@ -80,9 +80,7 @@ print """
 let vars = Dictionary<string,string option>()
 vars.["##ProjectName##"] <- promptForNoSpaces "Project Name (used for solution/project files)"
 vars.["##Summary##"]     <- promptFor "Summary (a short description)"
-vars.["##Description##"] <- promptFor "Description (longer description used by NuGet)"
 vars.["##Author##"]      <- promptFor "Author"
-vars.["##Tags##"]        <- promptFor "Tags (separated by spaces)"
 vars.["##GitHome##"]     <- promptFor "Github User or Organization"
 vars.["##GitName##"]     <- promptFor "Github Project Name (leave blank to use Project Name)"
 
@@ -92,8 +90,6 @@ let solutionTemplateName = "FSharp.ProjectScaffold"
 let projectTemplateName = "FSharp.ProjectTemplate"
 let oldProjectGuid = "7E90D6CE-A10B-4858-A5BC-41DF7250CBCA"
 let projectGuid = Guid.NewGuid().ToString()
-let oldTestProjectGuid = "E789C72A-5CFD-436B-8EF1-61AA2852A89F"
-let testProjectGuid = Guid.NewGuid().ToString()
 
 //Rename solution file
 let templateSolutionFile = localFile (sprintf "%s.sln" solutionTemplateName)
@@ -103,7 +99,7 @@ failfUnlessExists templateSolutionFile "Cannot find solution file template %s"
 let projectName = 
   match vars.["##ProjectName##"] with
   | Some p -> p.Replace(" ", "")
-  | None -> "ProjectScaffold"
+  | None -> "ProjectEuler"
 let solutionFile = localFile (projectName + ".sln")
 move templateSolutionFile solutionFile
 
@@ -137,9 +133,7 @@ let replaceContent file =
   File.ReadAllLines(file) |> Array.toSeq
   |> replace projectTemplateName projectName
   |> replace (oldProjectGuid.ToLowerInvariant()) (projectGuid.ToLowerInvariant())
-  |> replace (oldTestProjectGuid.ToLowerInvariant()) (testProjectGuid.ToLowerInvariant())
   |> replace (oldProjectGuid.ToUpperInvariant()) (projectGuid.ToUpperInvariant())
-  |> replace (oldTestProjectGuid.ToUpperInvariant()) (testProjectGuid.ToUpperInvariant())
   |> replace solutionTemplateName projectName
   |> replaceWithVarOrMsg "##Author##" "Author not set" 
   |> replaceWithVarOrMsg "##Description##" "Description not set" 
@@ -172,9 +166,7 @@ let generate templatePath generatedFilePath =
     File.ReadAllLines(templatePath) |> Array.toSeq 
     |> replace "##ProjectName##" projectName
     |> replaceWithVarOrMsg "##Summary##" "Project has no summmary; update build.fsx"
-    |> replaceWithVarOrMsg "##Description##" "Project has no description; update build.fsx"
     |> replaceWithVarOrMsg "##Author##" "Update Author in build.fsx" 
-    |> replaceWithVarOrMsg "##Tags##" "" 
     |> replaceWithVarOrMsg "##GitHome##" "Update GitHome in build.fsx"
     |> replace "##GitName##" projectName
 
@@ -183,5 +175,5 @@ let generate templatePath generatedFilePath =
   print (sprintf "# Generated %s" generatedFilePath)
 
 generate (localFile "build.template") (localFile "build.fsx")
-generate (localFile "docs/tools/generate.template") (localFile "docs/tools/generate.fsx")
+generate (localFile "progress/tools/generate.template") (localFile "progress/tools/generate.fsx")
 File.Delete "init.fsx"
