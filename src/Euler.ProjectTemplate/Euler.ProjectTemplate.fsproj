@@ -45,7 +45,6 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Script.fsx" />
     <None Include="paket.references" />
   </ItemGroup>
   <PropertyGroup>
