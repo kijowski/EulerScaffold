@@ -1,0 +1,16 @@
+(**
+## Problem no @Number
+### @Title
+### @Difficulty
+### https://projecteuler.net/problem=@Number
+@Content
+*)
+
+#load "@NestLevelHelperFunctions.fsx"
+#r @"@NestLevel..\..\packages\FSharp.Data\lib\net40\FSharp.Data.dll"
+
+let currentProblem = @Number
+
+let answer = nan
+
+sendAnswer currentProblem answer
