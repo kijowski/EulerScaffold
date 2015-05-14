@@ -76,8 +76,8 @@ vars.["##Author##"]      <- promptFor "Author"
 
 //Basic settings
 
-let solutionTemplateName = "FSharp.ProjectScaffold"
-let projectTemplateName = "FSharp.ProjectTemplate"
+let solutionTemplateName = "Euler.ProjectScaffold"
+let projectTemplateName = "Euler.ProjectTemplate"
 let oldProjectGuid = "7E90D6CE-A10B-4858-A5BC-41DF7250CBCA"
 let projectGuid = Guid.NewGuid().ToString()
 
@@ -124,7 +124,6 @@ let replaceContent file =
   |> replace (oldProjectGuid.ToUpperInvariant()) (projectGuid.ToUpperInvariant())
   |> replace solutionTemplateName projectName
   |> replaceWithVarOrMsg "##Author##" "Author not set" 
-  |> replaceWithVarOrMsg "##Description##" "Description not set" 
   |> replaceWithVarOrMsg "##Summary##" ""
   |> overwrite file
   |> sprintf "%s updated"
@@ -159,9 +158,9 @@ print  """
 # 4. Multiple problem per file. Files grouped in solution folders (user specified folder size)
 """
 
-let problemsPerFile = promptForNumber 1 "How many problems per file (default 1):"
+let problemsPerFile = promptForNumber 1 "How many problems per file (default 1)"
 let filesPerDirectory = 
-    match promptForNumber 25 "How many files per directory (default 25, set to 0 for all files in root directory):" with
+    match promptForNumber 25 "How many files per directory (default 25, set to 0 for all files in root directory)" with
     | 0 -> None
     | x -> Some x
 
@@ -191,7 +190,7 @@ let parseProblems (file:string) =
 
 let rootProjectDir = dirWithProject.FullName @@ projectName
 let rootDataDir = localFile "data" 
-let project = new Project(rootProjectDir @@ projectName @@ ".fsproj")
+let project = new Project(rootProjectDir @@ (projectName + ".fsproj"))
 let jsonFile = rootDataDir @@ "problems.json"
 let templateFile = 
     if problemsPerFile = 1 then rootDataDir @@ "single.template"
@@ -205,33 +204,40 @@ let applyTemplate problem =
     |> replace "@Content" problem.Content
     |> replace "@Difficulty" problem.Difficulty
     |> replace "@NestLevel" (if filesPerDirectory.IsSome then @"..\" else @"")    
-    |> Seq.reduce(+)
+    |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
     
 let fileName i =
-    if problemsPerFile = 1 then sprintf "Problem%3d.fsx" i
-    else sprintf "Problems%3d-%3d.fsx" (i * problemsPerFile + 1) ((i+1) * problemsPerFile) 
+    if problemsPerFile = 1 then sprintf "Problem%03i.fsx" (i+1)
+    else sprintf "Problems%03i-%03i.fsx" (i * problemsPerFile + 1) ((i+1) * problemsPerFile) 
 
 let folderName i =
     match filesPerDirectory with
-        | Some fpd -> rootProjectDir @@ sprintf "%3d-%3d" (i * fpd * problemsPerFile + 1) ((i+1) * fpd * problemsPerFile) 
-        | None -> rootProjectDir        
+        | Some fpd -> sprintf "%03i-%03i" (i * fpd * problemsPerFile + 1) ((i+1) * fpd * problemsPerFile) 
+        | None -> ""
+
 
 let addProblem folder (fileName, content) =
-    if not (Directory.Exists(folder)) then Directory.CreateDirectory folder |> ignore            
-    File.WriteAllText(folder @@ fileName, content)
-    project.AddItem("None", fileName) |> ignore
+    let absFolderPath = rootProjectDir @@ folder
+    if not (Directory.Exists(absFolderPath)) then Directory.CreateDirectory absFolderPath |> ignore            
+    File.WriteAllText(absFolderPath @@ fileName, content)
+    project.AddItem("None", folder @@ fileName) |> ignore
+    printfn "Added: %s" (folder @@ fileName)
 
 parseProblems jsonFile
 |> List.sortBy(fun prob -> prob.Number)
-|> Seq.windowed(problemsPerFile)
+|> Seq.mapi (fun i v -> i, v) // Add indices to the values (as first tuple element)
+|> Seq.groupBy (fun (i, v) -> i/problemsPerFile) 
+|> Seq.map (fun (i, v) -> v |> Seq.map snd) 
 |> Seq.mapi(fun i problems -> fileName i, problems)
-|> Seq.map(fun (fileName, problems) -> fileName,problems |> Seq.map(applyTemplate) |> Seq.reduce(+))
-|> Seq.windowed(defaultArg filesPerDirectory 1)
+|> Seq.map(fun (fileName, problems) -> fileName,problems |> Seq.map(applyTemplate) |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2))
+|> Seq.mapi (fun i v -> i, v) // Add indices to the values (as first tuple element)
+|> Seq.groupBy (fun (i, v) -> i/defaultArg filesPerDirectory 1) 
+|> Seq.map (fun (i, v) -> v |> Seq.map snd) 
 |> Seq.mapi(fun i files -> folderName i, files)
 |> Seq.iter(fun (folder, files) -> files |> Seq.iter(addProblem folder))
 
 project.Save()
 
-
 File.Delete "init.fsx"
+File.Delete "build.cmd"
 
