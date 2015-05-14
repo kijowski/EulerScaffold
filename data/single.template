@@ -6,11 +6,11 @@
 @Content
 *)
 
-#load "@NestLevelHelperFunctions.fsx"
+#load "@NestLevelEulerUtils.fsx"
 #r @"@NestLevel..\..\packages\FSharp.Data\lib\net40\FSharp.Data.dll"
 
 let currentProblem = @Number
 
 let answer = nan
 
-sendAnswer currentProblem answer
+EulerUtils.sendAnswer currentProblem (string answer)
