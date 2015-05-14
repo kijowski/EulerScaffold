@@ -3,9 +3,9 @@ open System.IO
 open System.Collections.Generic
 
 // --------------------------------
-// init.fsx 
+// init.fsx
 // This file is run the first time that you run build.sh/build.cmd
-// It generates the build.fsx and generate.fsx files 
+// It generates the build.fsx and generate.fsx files
 // --------------------------------
 
 // --------------------------------
@@ -13,9 +13,9 @@ open System.Collections.Generic
 // --------------------------------
 let inline directoryInfo path = new DirectoryInfo(path)
 let inline subDirectories (dir : DirectoryInfo) = dir.GetDirectories()
-let filesInDirMatching pattern (dir : DirectoryInfo) = 
-    if dir.Exists then dir.GetFiles pattern
-    else [||]
+let filesInDirMatching pattern (dir : DirectoryInfo) =
+  if dir.Exists then dir.GetFiles pattern
+  else [||]
 let inline combinePaths path1 (path2 : string) = Path.Combine(path1, path2.TrimStart [| '\\'; '/' |])
 let inline (@@) path1 path2 = combinePaths path1 path2
 
@@ -24,7 +24,7 @@ let inline (@@) path1 path2 = combinePaths path1 path2
 
 let failfUnlessExists f msg p = if not <| File.Exists f then failwithf msg p
 let combine p1 p2 = Path.Combine(p2, p1)
-let move p1 p2 = 
+let move p1 p2 =
   if File.Exists p1 then
     printfn "moving %s to %s" p1 p2
     File.Move(p1, p2)
@@ -33,14 +33,14 @@ let move p1 p2 =
     Directory.Move(p1, p2)
   else
     failwithf "Could not move %s to %s" p1 p2
-let localFile f = combine f __SOURCE_DIRECTORY__ 
+let localFile f = combine f __SOURCE_DIRECTORY__
 
-let prompt (msg:string) = 
+let prompt (msg:string) =
   Console.Write(msg)
-  Console.ReadLine().Trim() 
+  Console.ReadLine().Trim()
   |> function | "" -> None | s -> Some s
   |> Option.map (fun s -> s.Replace ("\"","\\\""))
-let promptFor friendlyName = 
+let promptFor friendlyName =
   prompt (sprintf "%s: " friendlyName)
 let rec promptForNoSpaces friendlyName =
   match promptFor friendlyName with
@@ -50,7 +50,7 @@ let rec promptForNoSpaces friendlyName =
 
 // User input
 let border = "#####################################################"
-let print msg = 
+let print msg =
   printfn """
   %s
   %s
@@ -60,11 +60,11 @@ let print msg =
 print """
 # Project Euler Init Script
 # Please answer a few questions and we will generate
-# solution with script files for Project Euler problems and 
-# build.fsx build script 
+# solution with script files for Project Euler problems and
+# build.fsx build script
 #
-# NOTE: Aside from the Project Name, you may leave any 
-# of these blank, but you will need to change the defaults 
+# NOTE: Aside from the Project Name, you may leave any
+# of these blank, but you will need to change the defaults
 # in the generated scripts.
 #
 """
@@ -86,7 +86,7 @@ let templateSolutionFile = localFile (sprintf "%s.sln" solutionTemplateName)
 failfUnlessExists templateSolutionFile "Cannot find solution file template %s"
             (templateSolutionFile |> Path.GetFullPath)
 
-let projectName = 
+let projectName =
   match vars.["##ProjectName##"] with
   | Some p -> p.Replace(" ", "")
   | None -> "ProjectEuler"
@@ -95,35 +95,34 @@ move templateSolutionFile solutionFile
 
 let dirWithProject = directoryInfo (__SOURCE_DIRECTORY__ @@ "src")
 //Rename project file
-dirWithProject 
+dirWithProject
 |> subDirectories
 |> Array.collect (fun d -> filesInDirMatching "*.?sproj" d)
 |> Array.iter (fun f -> f.MoveTo(f.Directory.FullName @@ (f.Name.Replace(projectTemplateName, projectName))))
 //Rename project directory
-dirWithProject 
+dirWithProject
 |> subDirectories
 |> Array.iter (fun d -> d.MoveTo(dirWithProject.FullName @@ (d.Name.Replace(projectTemplateName, projectName))))
-    
 
 //Now that everything is renamed, we need to update the content of some files
-let replace t r (lines:seq<string>) = 
-  seq { 
-    for s in lines do 
-      if s.Contains(t) then yield s.Replace(t, r) 
+let replace t r (lines:seq<string>) =
+  seq {
+    for s in lines do
+      if s.Contains(t) then yield s.Replace(t, r)
       else yield s }
 
-let replaceWithVarOrMsg t n lines = 
+let replaceWithVarOrMsg t n lines =
     replace t (vars.[t] |> function | None -> n | Some s -> s) lines
 
-let overwrite file content = File.WriteAllLines(file, content |> Seq.toArray); file 
+let overwrite file content = File.WriteAllLines(file, content |> Seq.toArray); file
 
-let replaceContent file = 
+let replaceContent file =
   File.ReadAllLines(file) |> Array.toSeq
   |> replace projectTemplateName projectName
   |> replace (oldProjectGuid.ToLowerInvariant()) (projectGuid.ToLowerInvariant())
   |> replace (oldProjectGuid.ToUpperInvariant()) (projectGuid.ToUpperInvariant())
   |> replace solutionTemplateName projectName
-  |> replaceWithVarOrMsg "##Author##" "Author not set" 
+  |> replaceWithVarOrMsg "##Author##" "Author not set"
   |> replaceWithVarOrMsg "##Summary##" ""
   |> overwrite file
   |> sprintf "%s updated"
@@ -137,7 +136,7 @@ let rec filesToReplace dir = seq {
   yield! Directory.EnumerateDirectories(dir) |> Seq.collect filesToReplace
 }
 
-[solutionFile] @ (dirWithProject.FullName |> filesToReplace |> List.ofSeq) 
+[solutionFile] @ (dirWithProject.FullName |> filesToReplace |> List.ofSeq)
 |> List.map replaceContent
 |> List.iter print
 
@@ -159,10 +158,10 @@ print  """
 """
 
 let problemsPerFile = promptForNumber 1 "How many problems per file (default 1)"
-let filesPerDirectory = 
-    match promptForNumber 25 "How many files per directory (default 25, set to 0 for all files in root directory)" with
-    | 0 -> None
-    | x -> Some x
+let filesPerDirectory =
+  match promptForNumber 25 "How many files per directory (default 25, set to 0 for all files in root directory)" with
+  | 0 -> None
+  | x -> Some x
 
 // Load libraries for project manipulation and Json parsing
 #r @"Microsoft.Build.dll"
@@ -173,66 +172,64 @@ open FSharp.Data.JsonExtensions
 
 // Simple domain model
 type EulerProblem = {
-    Number : int
-    Title : string
-    Content : string
-    Difficulty : string
+  Number : int
+  Title : string
+  Content : string
+  Difficulty : string
 }
 
 let parseProblems (file:string) =
-    [for problem in JsonValue.Load(file) do
-        yield {Number=problem?Number.AsInteger()
-               Title = problem?Title.AsString()
-               Content = problem?Content.AsString()
-               Difficulty=problem?Difficulty.AsString()
-               }
-    ]   
+  [for problem in JsonValue.Load(file) do
+    yield {Number=problem?Number.AsInteger()
+           Title = problem?Title.AsString()
+           Content = problem?Content.AsString()
+           Difficulty=problem?Difficulty.AsString()
+          }
+  ]
 
 let rootProjectDir = dirWithProject.FullName @@ projectName
-let rootDataDir = localFile "data" 
+let rootDataDir = localFile "data"
 let project = new Project(rootProjectDir @@ (projectName + ".fsproj"))
 let jsonFile = rootDataDir @@ "problems.json"
-let templateFile = 
-    if problemsPerFile = 1 then rootDataDir @@ "single.template"
-    else rootDataDir @@ "multiple.template"
-    
+let templateFile =
+  if problemsPerFile = 1 then rootDataDir @@ "single.template"
+  else rootDataDir @@ "multiple.template"
 
 let applyTemplate problem =
-    File.ReadAllLines(templateFile)
-    |> replace "@Number" (problem.Number.ToString())
-    |> replace "@Title" problem.Title
-    |> replace "@Content" problem.Content
-    |> replace "@Difficulty" problem.Difficulty
-    |> replace "@NestLevel" (if filesPerDirectory.IsSome then @"..\" else @"")    
-    |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
-    
+  File.ReadAllLines(templateFile)
+  |> replace "@Number" (problem.Number.ToString())
+  |> replace "@Title" problem.Title
+  |> replace "@Content" problem.Content
+  |> replace "@Difficulty" problem.Difficulty
+  |> replace "@NestLevel" (if filesPerDirectory.IsSome then @"..\" else @"")
+  |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
+
 let fileName i =
-    if problemsPerFile = 1 then sprintf "Problem%03i.fsx" (i+1)
-    else sprintf "Problems%03i-%03i.fsx" (i * problemsPerFile + 1) ((i+1) * problemsPerFile) 
+  if problemsPerFile = 1 then sprintf "Problem%03i.fsx" (i+1)
+  else sprintf "Problems%03i-%03i.fsx" (i * problemsPerFile + 1) ((i+1) * problemsPerFile)
 
 let folderName i =
-    match filesPerDirectory with
-        | Some fpd -> sprintf "%03i-%03i" (i * fpd * problemsPerFile + 1) ((i+1) * fpd * problemsPerFile) 
-        | None -> ""
-
+  match filesPerDirectory with
+    | Some fpd -> sprintf "%03i-%03i" (i * fpd * problemsPerFile + 1) ((i+1) * fpd * problemsPerFile)
+    | None -> ""
 
 let addProblem folder (fileName, content) =
-    let absFolderPath = rootProjectDir @@ folder
-    if not (Directory.Exists(absFolderPath)) then Directory.CreateDirectory absFolderPath |> ignore            
-    File.WriteAllText(absFolderPath @@ fileName, content)
-    project.AddItem("None", folder @@ fileName) |> ignore
-    printfn "Added: %s" (folder @@ fileName)
+  let absFolderPath = rootProjectDir @@ folder
+  if not (Directory.Exists(absFolderPath)) then Directory.CreateDirectory absFolderPath |> ignore
+  File.WriteAllText(absFolderPath @@ fileName, content)
+  project.AddItem("None", folder @@ fileName) |> ignore
+  printfn "Added: %s" (folder @@ fileName)
 
 parseProblems jsonFile
 |> List.sortBy(fun prob -> prob.Number)
 |> Seq.mapi (fun i v -> i, v) // Add indices to the values (as first tuple element)
-|> Seq.groupBy (fun (i, v) -> i/problemsPerFile) 
-|> Seq.map (fun (i, v) -> v |> Seq.map snd) 
+|> Seq.groupBy (fun (i, v) -> i/problemsPerFile)
+|> Seq.map (fun (i, v) -> v |> Seq.map snd)
 |> Seq.mapi(fun i problems -> fileName i, problems)
 |> Seq.map(fun (fileName, problems) -> fileName,problems |> Seq.map(applyTemplate) |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2))
 |> Seq.mapi (fun i v -> i, v) // Add indices to the values (as first tuple element)
-|> Seq.groupBy (fun (i, v) -> i/defaultArg filesPerDirectory 1) 
-|> Seq.map (fun (i, v) -> v |> Seq.map snd) 
+|> Seq.groupBy (fun (i, v) -> i/defaultArg filesPerDirectory 1)
+|> Seq.map (fun (i, v) -> v |> Seq.map snd)
 |> Seq.mapi(fun i files -> folderName i, files)
 |> Seq.iter(fun (folder, files) -> files |> Seq.iter(addProblem folder))
 
@@ -240,4 +237,3 @@ project.Save()
 
 File.Delete "init.fsx"
 File.Delete "build.cmd"
-
