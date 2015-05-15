@@ -46,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
-    <None Include="HelperFunctions.fsx" />
+    <None Include="EulerUtils.fsx" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

@@ -1,17 +1,15 @@
 module Problem@Number = 
-	(**
-	## Problem no @Number
-	### @Title
-	### @Difficulty
-	### https://projecteuler.net/problem=@Number
-	@Content
-	*)	
-	#load "@NestLevelEulerUtils.fsx"
-	#r @"@NestLevel..\..\packages\FSharp.Data\lib\net40\FSharp.Data.dll"
+  (**
+  ## Problem no @Number
+  ### @Title
+  ### @Difficulty
+  ### https://projecteuler.net/problem=@Number
+  @Content
+  *)  
 
-	let currentProblem = @Number
+  let currentProblem = @Number
 
-	let answer = nan
+  let answer = nan
 
-	EulerUtils.sendAnswer currentProblem (string answer)
+  EulerUtils.sendAnswer currentProblem (string answer)
 

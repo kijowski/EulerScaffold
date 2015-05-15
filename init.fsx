@@ -191,9 +191,15 @@ let rootProjectDir = dirWithProject.FullName @@ projectName
 let rootDataDir = localFile "data"
 let project = new Project(rootProjectDir @@ (projectName + ".fsproj"))
 let jsonFile = rootDataDir @@ "problems.json"
+let preambleFile = rootDataDir @@ "preamble.template"
 let templateFile =
   if problemsPerFile = 1 then rootDataDir @@ "single.template"
   else rootDataDir @@ "multiple.template"
+
+let processedPreamble = 
+  File.ReadAllLines(preambleFile)
+  |> replace "@NestLevel" (if filesPerDirectory.IsSome then @"..\" else @"")
+  |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
 
 let applyTemplate problem =
   File.ReadAllLines(templateFile)
@@ -201,7 +207,6 @@ let applyTemplate problem =
   |> replace "@Title" problem.Title
   |> replace "@Content" problem.Content
   |> replace "@Difficulty" problem.Difficulty
-  |> replace "@NestLevel" (if filesPerDirectory.IsSome then @"..\" else @"")
   |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
 
 let fileName i =
@@ -226,7 +231,7 @@ parseProblems jsonFile
 |> Seq.groupBy (fun (i, v) -> i/problemsPerFile)
 |> Seq.map (fun (i, v) -> v |> Seq.map snd)
 |> Seq.mapi(fun i problems -> fileName i, problems)
-|> Seq.map(fun (fileName, problems) -> fileName,problems |> Seq.map(applyTemplate) |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2))
+|> Seq.map(fun (fileName, problems) -> fileName, problems |> Seq.map(applyTemplate) |> Seq.fold(fun line1 line2 -> line1 + Environment.NewLine + line2) processedPreamble)
 |> Seq.mapi (fun i v -> i, v) // Add indices to the values (as first tuple element)
 |> Seq.groupBy (fun (i, v) -> i/defaultArg filesPerDirectory 1)
 |> Seq.map (fun (i, v) -> v |> Seq.map snd)
@@ -236,4 +241,3 @@ parseProblems jsonFile
 project.Save()
 
 File.Delete "init.fsx"
-File.Delete "build.cmd"

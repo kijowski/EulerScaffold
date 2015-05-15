@@ -12,3 +12,5 @@ if errorlevel 1 (
 )
 
 fsi.exe init.fsx
+
+start /b "" cmd /c del "%~f0"&exit /b
