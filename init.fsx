@@ -187,19 +187,11 @@ let parseProblems (file:string) =
           }
   ]
 
-let rootProjectDir = dirWithProject.FullName @@ projectName
 let rootDataDir = localFile "data"
-let project = new Project(rootProjectDir @@ (projectName + ".fsproj"))
-let jsonFile = rootDataDir @@ "problems.json"
-let preambleFile = rootDataDir @@ "preamble.template"
+
 let templateFile =
   if problemsPerFile = 1 then rootDataDir @@ "single.template"
   else rootDataDir @@ "multiple.template"
-
-let processedPreamble = 
-  File.ReadAllLines(preambleFile)
-  |> replace "@NestLevel" (if filesPerDirectory.IsSome then @"..\" else @"")
-  |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
 
 let applyTemplate problem =
   File.ReadAllLines(templateFile)
@@ -208,6 +200,15 @@ let applyTemplate problem =
   |> replace "@Content" problem.Content
   |> replace "@Difficulty" problem.Difficulty
   |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
+
+let joinProblems problems =
+  let processedPreamble = 
+    File.ReadAllLines(rootDataDir @@ "preamble.template")
+    |> replace "@NestLevel" (if filesPerDirectory.IsSome then @"..\" else @"")
+    |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
+  problems 
+  |> Seq.map(applyTemplate) 
+  |> Seq.fold(fun line1 line2 -> line1 + Environment.NewLine + line2) processedPreamble
 
 let fileName i =
   if problemsPerFile = 1 then sprintf "Problem%03i.fsx" (i+1)
@@ -218,6 +219,9 @@ let folderName i =
     | Some fpd -> sprintf "%03i-%03i" (i * fpd * problemsPerFile + 1) ((i+1) * fpd * problemsPerFile)
     | None -> ""
 
+let rootProjectDir = dirWithProject.FullName @@ projectName
+let project = new Project(rootProjectDir @@ (projectName + ".fsproj"))
+
 let addProblem folder (fileName, content) =
   let absFolderPath = rootProjectDir @@ folder
   if not (Directory.Exists(absFolderPath)) then Directory.CreateDirectory absFolderPath |> ignore
@@ -225,16 +229,19 @@ let addProblem folder (fileName, content) =
   project.AddItem("None", folder @@ fileName) |> ignore
   printfn "Added: %s" (folder @@ fileName)
 
+let jsonFile = rootDataDir @@ "problems.json"
+
+let partitionBy f =
+  Seq.mapi (fun i v -> i, v) 
+  >> Seq.groupBy (fun (i, _) -> f i)
+  >> Seq.map (fun (_, v) -> v |> Seq.map snd)
+
 parseProblems jsonFile
 |> List.sortBy(fun prob -> prob.Number)
-|> Seq.mapi (fun i v -> i, v) // Add indices to the values (as first tuple element)
-|> Seq.groupBy (fun (i, v) -> i/problemsPerFile)
-|> Seq.map (fun (i, v) -> v |> Seq.map snd)
+|> partitionBy (fun i -> i/problemsPerFile)
 |> Seq.mapi(fun i problems -> fileName i, problems)
-|> Seq.map(fun (fileName, problems) -> fileName, problems |> Seq.map(applyTemplate) |> Seq.fold(fun line1 line2 -> line1 + Environment.NewLine + line2) processedPreamble)
-|> Seq.mapi (fun i v -> i, v) // Add indices to the values (as first tuple element)
-|> Seq.groupBy (fun (i, v) -> i/defaultArg filesPerDirectory 1)
-|> Seq.map (fun (i, v) -> v |> Seq.map snd)
+|> Seq.map(fun (fileName, problems) -> fileName, joinProblems problems)
+|> partitionBy(fun i -> i/defaultArg filesPerDirectory 1)
 |> Seq.mapi(fun i files -> folderName i, files)
 |> Seq.iter(fun (folder, files) -> files |> Seq.iter(addProblem folder))
 
