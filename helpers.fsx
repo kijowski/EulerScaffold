@@ -1,13 +1,21 @@
-#r @"packages\FSharp.Data.2.2.0\lib\net40\FSharp.Data.dll"
+#r @"packages\FSharp.Data\lib\net40\FSharp.Data.dll"
 #r @"Microsoft.Build.dll"
 open FSharp.Data
 open System
 open System.Text.RegularExpressions
 open Microsoft.Build.Evaluation
 open System.IO
-open System.Collections.Generic
 open System.Net
- 
+
+// helpers brought from Project Scaffolding
+let inline combinePaths path1 (path2 : string) = Path.Combine(path1, path2.TrimStart [| '\\'; '/' |])
+let inline (@@) path1 path2 = combinePaths path1 path2
+let replace t r (lines:seq<string>) =
+  seq {
+    for s in lines do
+      if s.Contains(t) then yield s.Replace(t, r)
+      else yield s }
+       
 // domain model for project euler problem definitions
 type EulerProblem = {
   Number : int
@@ -16,24 +24,14 @@ type EulerProblem = {
   Difficulty : string
   Raw : string
 }
- 
-// helper functions
-let regexRep (patt:string) (repl:string) input =
-  Regex.Replace(input, patt, repl)
- 
-let processTemplate template problem =
-  template
-  |> regexRep "@Number" (problem.Number.ToString())
-  |> regexRep "@Title" problem.Title
-  |> regexRep "@Content" problem.Content
- 
+
 let username = "username";
 let password = "******";
 
 let cc = CookieContainer()
 Http.Request(@"https://projecteuler.net/sign_in",
   body = FormValues ["username", username
-                   "password", password
+                     "password", password
                      "remember_me", "1"
                      "sign_in","Sign+In"
                      ], cookieContainer=cc) |> ignore
@@ -44,13 +42,13 @@ let (|SimpleNode|ComplexNode|) (node:HtmlNode) =
   else ComplexNode (node.Name(), node.Elements())
 
 
-let downloadProblem n =
+let downloadProblem imagesPath n =
   let rec parseProblem (node:HtmlNode) = 
     match node with
       | SimpleNode("img",_) -> if node.TryGetAttribute("src").IsSome then
                                  let file = @"https://projecteuler.net/" + node.Attribute("src").Value()
                                  use client = new WebClient()
-                                 client.DownloadFile(file, @"C:\Users\michal\Downloads\ProjectScaffold-master\ProjectScaffold-master\src\ProjectEuler\" + Path.GetFileName(file))
+                                 client.DownloadFile(file, imagesPath @@ Path.GetFileName(file))
                                  sprintf "![alt text](%s)" (node.Attribute("src").Value())
                                else ""
       | SimpleNode("b",text) -> "**" + text + "**"
@@ -76,4 +74,28 @@ let downloadProblem n =
                     })
     | true -> None
 
-downloadProblem 405
+downloadProblem "" 405
+
+let applyTemplate templateFile problem =
+  File.ReadAllLines(templateFile)
+  |> replace "@Number" (problem.Number.ToString())
+  |> replace "@Title" problem.Title
+  |> replace "@Content" problem.Content
+  |> replace "@Difficulty" problem.Difficulty
+  |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
+
+let joinProblems preambleFile templateFile nestLevel problems =
+  let processedPreamble = 
+    File.ReadAllLines(preambleFile)
+    |> replace "@NestLevel" nestLevel
+    |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
+  problems 
+  |> Seq.map(applyTemplate templateFile) 
+  |> Seq.fold(fun line1 line2 -> line1 + Environment.NewLine + line2) processedPreamble
+
+let addProblem (project:Project) folder (fileName, content) =
+  let absFolderPath = project.DirectoryPath @@ folder
+  if not (Directory.Exists(absFolderPath)) then Directory.CreateDirectory absFolderPath |> ignore
+  File.WriteAllText(absFolderPath @@ fileName, content)
+  project.AddItem("None", folder @@ fileName) |> ignore
+  printfn "Added: %s" (folder @@ fileName)
