@@ -25,17 +25,6 @@ type EulerProblem = {
   Raw : string
 }
 
-let username = "username";
-let password = "******";
-
-let cc = CookieContainer()
-Http.Request(@"https://projecteuler.net/sign_in",
-  body = FormValues ["username", username
-                     "password", password
-                     "remember_me", "1"
-                     "sign_in","Sign+In"
-                     ], cookieContainer=cc) |> ignore
-
 let (|SimpleNode|ComplexNode|) (node:HtmlNode) =
   if node.Elements().IsEmpty 
   then SimpleNode (node.Name(), node.InnerText())
@@ -43,6 +32,17 @@ let (|SimpleNode|ComplexNode|) (node:HtmlNode) =
 
 
 let downloadProblem imagesPath n =
+  let username = "username";
+  let password = "******";
+
+  let cc = CookieContainer()
+  Http.Request(@"https://projecteuler.net/sign_in",
+   body = FormValues ["username", username
+                      "password", password
+                      "remember_me", "1"
+                      "sign_in","Sign+In"
+                     ], cookieContainer=cc) |> ignore
+
   let rec parseProblem (node:HtmlNode) = 
     match node with
       | SimpleNode("img",_) -> if node.TryGetAttribute("src").IsSome then
@@ -74,8 +74,6 @@ let downloadProblem imagesPath n =
                     })
     | true -> None
 
-downloadProblem "" 405
-
 let applyTemplate templateFile problem =
   File.ReadAllLines(templateFile)
   |> replace "@Number" (problem.Number.ToString())
@@ -93,9 +91,11 @@ let joinProblems preambleFile templateFile nestLevel problems =
   |> Seq.map(applyTemplate templateFile) 
   |> Seq.fold(fun line1 line2 -> line1 + Environment.NewLine + line2) processedPreamble
 
-let addProblem (project:Project) folder (fileName, content) =
+let addProblem (projectFile:string) folder (fileName, content) =
+  let project = ProjectCollection.GlobalProjectCollection.LoadProject(projectFile)
   let absFolderPath = project.DirectoryPath @@ folder
   if not (Directory.Exists(absFolderPath)) then Directory.CreateDirectory absFolderPath |> ignore
   File.WriteAllText(absFolderPath @@ fileName, content)
   project.AddItem("None", folder @@ fileName) |> ignore
+  project.Save()  
   printfn "Added: %s" (folder @@ fileName)

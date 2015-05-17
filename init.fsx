@@ -164,19 +164,12 @@ let filesPerDirectory =
   | x -> Some x
 
 // Load libraries for project manipulation and Json parsing
-#r @"Microsoft.Build.dll"
 #r @"packages\FSharp.Data\lib\net40\FSharp.Data.dll"
-open Microsoft.Build.Evaluation
+#load @"helpers.fsx"
+
 open FSharp.Data
 open FSharp.Data.JsonExtensions
-
-// Simple domain model
-type EulerProblem = {
-  Number : int
-  Title : string
-  Content : string
-  Difficulty : string
-}
+open Helpers
 
 let parseProblems (file:string) =
   [for problem in JsonValue.Load(file) do
@@ -184,6 +177,7 @@ let parseProblems (file:string) =
            Title = problem?Title.AsString()
            Content = problem?Content.AsString()
            Difficulty=problem?Difficulty.AsString()
+           Raw = problem.ToString()
           }
   ]
 
@@ -193,22 +187,9 @@ let templateFile =
   if problemsPerFile = 1 then rootDataDir @@ "single.template"
   else rootDataDir @@ "multiple.template"
 
-let applyTemplate problem =
-  File.ReadAllLines(templateFile)
-  |> replace "@Number" (problem.Number.ToString())
-  |> replace "@Title" problem.Title
-  |> replace "@Content" problem.Content
-  |> replace "@Difficulty" problem.Difficulty
-  |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
+let preambleFile = rootDataDir @@ "preamble.template"
 
-let joinProblems problems =
-  let processedPreamble = 
-    File.ReadAllLines(rootDataDir @@ "preamble.template")
-    |> replace "@NestLevel" (if filesPerDirectory.IsSome then @"..\" else @"")
-    |> Seq.reduce(fun line1 line2 -> line1 + Environment.NewLine + line2)
-  problems 
-  |> Seq.map(applyTemplate) 
-  |> Seq.fold(fun line1 line2 -> line1 + Environment.NewLine + line2) processedPreamble
+let nestLevel = if filesPerDirectory.IsSome then @"..\" else @""
 
 let fileName i =
   if problemsPerFile = 1 then sprintf "Problem%03i.fsx" (i+1)
@@ -219,15 +200,7 @@ let folderName i =
     | Some fpd -> sprintf "%03i-%03i" (i * fpd * problemsPerFile + 1) ((i+1) * fpd * problemsPerFile)
     | None -> ""
 
-let rootProjectDir = dirWithProject.FullName @@ projectName
-let project = new Project(rootProjectDir @@ (projectName + ".fsproj"))
-
-let addProblem folder (fileName, content) =
-  let absFolderPath = rootProjectDir @@ folder
-  if not (Directory.Exists(absFolderPath)) then Directory.CreateDirectory absFolderPath |> ignore
-  File.WriteAllText(absFolderPath @@ fileName, content)
-  project.AddItem("None", folder @@ fileName) |> ignore
-  printfn "Added: %s" (folder @@ fileName)
+let projectFile = dirWithProject.FullName @@ projectName @@ (projectName + ".fsproj")
 
 let jsonFile = rootDataDir @@ "problems.json"
 
@@ -240,11 +213,9 @@ parseProblems jsonFile
 |> List.sortBy(fun prob -> prob.Number)
 |> partitionBy (fun i -> i/problemsPerFile)
 |> Seq.mapi(fun i problems -> fileName i, problems)
-|> Seq.map(fun (fileName, problems) -> fileName, joinProblems problems)
+|> Seq.map(fun (fileName, problems) -> fileName, joinProblems preambleFile templateFile nestLevel problems)
 |> partitionBy(fun i -> i/defaultArg filesPerDirectory 1)
 |> Seq.mapi(fun i files -> folderName i, files)
-|> Seq.iter(fun (folder, files) -> files |> Seq.iter(addProblem folder))
-
-project.Save()
+|> Seq.iter(fun (folder, files) -> files |> Seq.iter(addProblem projectFile folder))
 
 File.Delete "init.fsx"
