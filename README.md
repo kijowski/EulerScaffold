@@ -1,31 +1,27 @@
-[![Issue Stats](http://issuestats.com/github/fsprojects/ProjectScaffold/badge/issue)](http://issuestats.com/github/fsprojects/ProjectScaffold)
-[![Issue Stats](http://issuestats.com/github/fsprojects/ProjectScaffold/badge/pr)](http://issuestats.com/github/fsprojects/ProjectScaffold)
+# EulerScaffold
 
-# ProjectScaffold
+This project can be used to scaffold a .NET solution which can be used as a base for solving [Project Euler](http://projecteuler.net) problems. 
+It was inspired by (and is based on) [ProjectScaffold](https://github.com/fsprojects/ProjectScaffold/) project. 
 
-This project can be used to scaffold a prototypical .NET solution including file system layout and tooling. This includes a build process that: 
+## Features
+* heavily stripped down modification of [ProjectScaffold](https://github.com/fsprojects/ProjectScaffold/)
+* based on script files and intended for solving problems in an interactive manner
+* template based creation of script files
+* [MathNet.Numerics.FSharp](http://numerics.mathdotnet.com/) included by default
 
-* updates all AssemblyInfo files
-* compiles the application and runs all test projects
-* generates [SourceLinks](https://github.com/ctaggart/SourceLink)
-* generates API docs based on XML document tags
-* generates [documentation based on Markdown files](http://fsprojects.github.io/ProjectScaffold/writing-docs.html)
-* generates [NuGet](http://www.nuget.org) packages
-* and allows a simple [one step release process](http://fsprojects.github.io/ProjectScaffold/release-process.html).
-
+## Usage
 In order to start the scaffolding process run 
 
-    $ build.cmd // on windows    
-    $ build.sh  // on mono
+    $ build.cmd
+
+## ToDo
+- [ ] add support to mono
+- [ ] add support to mono
     
-Read the [Getting started tutorial](http://fsprojects.github.io/ProjectScaffold/index.html#Getting-started) to learn more.
+## Getting involved
 
-Documentation: http://fsprojects.github.io/ProjectScaffold
+Contributions are always welcome.
 
-## Maintainer(s)
+### Maintainer
 
-- [@forki](https://github.com/forki)
-- [@pblasucci](https://github.com/pblasucci)
-- [@sergey-tihon](https://github.com/sergey-tihon)
-
-The default maintainer account for projects under "fsprojects" is [@fsgit](https://github.com/fsgit) - F# Community Project Incubation Space (repo management)
+- [@kijowski](https://github.com/kijowski)
