@@ -4,7 +4,7 @@ This project can be used to scaffold a .NET solution which can be used as a base
 It was inspired by (and is based on) [ProjectScaffold](https://github.com/fsprojects/ProjectScaffold/) project. 
 
 ## Features
-* heavily stripped down modification of [ProjectScaffold](https://github.com/fsprojects/ProjectScaffold/)
+* stripped down modification of [ProjectScaffold](https://github.com/fsprojects/ProjectScaffold/)
 * based on script files and intended for solving problems in an interactive manner
 * template based creation of script files
 * [MathNet.Numerics.FSharp](http://numerics.mathdotnet.com/) included by default
@@ -15,7 +15,6 @@ In order to start the scaffolding process run
     $ build.cmd
 
 ## ToDo
-- [ ] add support to mono
 - [ ] add support to mono
     
 ## Getting involved
