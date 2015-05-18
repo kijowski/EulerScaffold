@@ -76,7 +76,7 @@ vars.["##Author##"]      <- promptFor "Author"
 
 //Basic settings
 
-let solutionTemplateName = "Euler.ProjectScaffold"
+let solutionTemplateName = "Euler.Scaffold"
 let projectTemplateName = "Euler.ProjectTemplate"
 let oldProjectGuid = "7E90D6CE-A10B-4858-A5BC-41DF7250CBCA"
 let projectGuid = Guid.NewGuid().ToString()
