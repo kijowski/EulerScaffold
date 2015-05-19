@@ -7,7 +7,8 @@ It was inspired by (and is based on) [ProjectScaffold](https://github.com/fsproj
 * stripped down modification of [ProjectScaffold](https://github.com/fsprojects/ProjectScaffold/)
 * based on script files and intended for solving problems in an interactive manner
 * template based creation of script files
-* [MathNet.Numerics.FSharp](http://numerics.mathdotnet.com/) included by default
+* [MathNet.Numerics.FSharp](http://numerics.mathdotnet.com/) is included by default
+* pregenerated html file with all of the problems is included
 
 ## Usage
 In order to start the scaffolding process run 
