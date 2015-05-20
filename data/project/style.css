@@ -17,6 +17,9 @@
    .print {
       display:none;
    }
+   .problem {
+       margin: 20px;
+   }
    #container {
       padding-top: 60px;
    }
