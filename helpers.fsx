@@ -1,4 +1,4 @@
-#r @"packages\FSharp.Data\lib\net40\FSharp.Data.dll"
+#r @"packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r @"Microsoft.Build.dll"
 open FSharp.Data
 open System
@@ -91,11 +91,21 @@ let joinProblems preambleFile templateFile nestLevel problems =
   |> Seq.map(applyTemplate templateFile) 
   |> Seq.fold(fun line1 line2 -> line1 + Environment.NewLine + line2) processedPreamble
 
-let addProblem (projectFile:string) folder (fileName, content) =
-  let project = ProjectCollection.GlobalProjectCollection.LoadProject(projectFile)
-  let absFolderPath = project.DirectoryPath @@ folder
+let addProblems (projectFile:string) folder files =
+  let absFolderPath = Path.GetDirectoryName(projectFile) @@ folder
   if not (Directory.Exists(absFolderPath)) then Directory.CreateDirectory absFolderPath |> ignore
-  File.WriteAllText(absFolderPath @@ fileName, content)
-  project.AddItem("None", folder @@ fileName) |> ignore
-  project.Save()  
-  printfn "Added: %s" (folder @@ fileName)
+  files
+  |> Seq.map(fun (fileName, content) -> 
+                  File.WriteAllText(absFolderPath @@ fileName, content) 
+                  printfn "Added: %s" (folder @@ fileName)
+                  sprintf @"<None Include=""%s"" />" (folder @@ fileName)
+            )
+  |> Seq.reduce(fun st1 st2 -> sprintf "%s\n%s" st1 st2)
+
+let addAllProblems (projectFile:string) contents =
+  let files =
+    contents
+    |> Seq.map(fun (folder,files) -> addProblems projectFile folder files)
+    |> Seq.reduce(fun st1 st2 -> sprintf "%s\n%s" st1 st2)
+  let projectContent = File.ReadAllText(projectFile)
+  File.WriteAllText(projectFile, projectContent.Replace("@Include", files))

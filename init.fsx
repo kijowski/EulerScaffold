@@ -164,7 +164,7 @@ let filesPerDirectory =
   | x -> Some x
 
 // Load libraries for project manipulation and Json parsing
-#r @"packages\FSharp.Data\lib\net40\FSharp.Data.dll"
+#r @"packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #load @"helpers.fsx"
 
 open FSharp.Data
@@ -216,6 +216,8 @@ parseProblems jsonFile
 |> Seq.map(fun (fileName, problems) -> fileName, joinProblems preambleFile templateFile nestLevel problems)
 |> partitionBy(fun i -> i/defaultArg filesPerDirectory 1)
 |> Seq.mapi(fun i files -> folderName i, files)
-|> Seq.iter(fun (folder, files) -> files |> Seq.iter(addProblem projectFile folder))
+|> fun(problems) -> addAllProblems projectFile problems
+
+
 
 File.Delete "init.fsx"
