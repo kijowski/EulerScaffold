@@ -102,7 +102,7 @@ let addProblems (projectFile:string) folder files =
             )
   |> Seq.reduce(fun st1 st2 -> sprintf "%s\n%s" st1 st2)
 
-let addAllProblems (projectFile:string) contents =
+let addAllProblems (projectFile:string) (contents:(string*(string*string) seq) seq) =
   let files =
     contents
     |> Seq.map(fun (folder,files) -> addProblems projectFile folder files)
