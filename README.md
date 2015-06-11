@@ -13,10 +13,11 @@ It was inspired by (and is based on) [ProjectScaffold](https://github.com/fsproj
 ## Usage
 In order to start the scaffolding process run 
 
-    $ build.cmd
+    $ build.cmd //on Windows
+    $ build.sh //on mono
 
 ## ToDo
-- [ ] add support to mono
+- [x] add support to mono
     
 ## Getting involved
 
