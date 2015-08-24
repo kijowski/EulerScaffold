@@ -1,14 +1,23 @@
 # EulerScaffold
+> Starting point for solving Project Euler problems in F#
 
-This project can be used to scaffold a .NET solution which can be used as a base for solving [Project Euler](http://projecteuler.net) problems. 
+### Table of contents
+* [Synopsis](#synopsis)
+* [Features](#features)
+* [Usage](#usage)
+* [Authors](#authors)
+* [License](#license)
+
+## Synopsis
+EulerScaffold can be used to create base .NET solution for solving [Project Euler](http://projecteuler.net) problems. 
 It was inspired by (and is based on) [ProjectScaffold](https://github.com/fsprojects/ProjectScaffold/) project. 
 
 ## Features
 * stripped down modification of [ProjectScaffold](https://github.com/fsprojects/ProjectScaffold/)
-* based on script files and intended for solving problems in an interactive manner
+* intended for solving problems in an interactive manner
 * template based creation of script files
-* [MathNet.Numerics.FSharp](http://numerics.mathdotnet.com/) is included by default
-* pregenerated html file with all of the problems is included
+* [MathNet.Numerics.FSharp](http://numerics.mathdotnet.com/) included by default
+* pregenerated html file with all of the problems included
 
 ## Usage
 In order to start the scaffolding process run 
@@ -16,13 +25,9 @@ In order to start the scaffolding process run
     $ build.cmd //on Windows
     $ build.sh //on mono
 
-## ToDo
-- [x] add support to mono
-    
-## Getting involved
+## Authors
+* [Michal Kijowski](michal.kijowski@hotmail.com)
 
-Contributions are always welcome.
+## License
+[The MIT License (MIT)](LICENSE.txt)
 
-### Maintainer
-
-- [@kijowski](https://github.com/kijowski)
